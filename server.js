@@ -29,77 +29,15 @@ const io = new Server(server, {
 
 const rooms = {};
 const THEMES = [
-  { name: 'Animal', items: ["dog","cat","cow","sheep","goat","horse","pig","chicken","duck","goose",
-    "donkey","camel","deer","rabbit","mouse","rat","squirrel","bat",
-    "monkey","gorilla","chimpanzee","panda","koala","kangaroo","bear","wolf",
-    "fox","lion","tiger","cheetah","leopard","jaguar","zebra","giraffe",
-    "hippo","rhino","elephant","crocodile","lizard","snake","frog",
-    "turtle","crab","lobster","shrimp","octopus","squid",
-    "starfish","dolphin","whale","shark","seal","penguin","eagle",
-    "hawk","owl","parrot","flamingo","pigeon",
-    ,"crow","bee","wasp","ant","butterfly",
-    "moth","fly","mosquito","spider","scorpion","snail","bat","worm","spider",
-    "cricket","hedgehog","coccinelle",
-    "raccoon","armadillo","platypus"] },
+        { name: 'Animal'},
 
-    { name: 'Anime', items: ["naruto","sasuke","sakura","kakashi","jiraiya","itachi","madara","goku",
-        "vegeta","gohan","trunks","piccolo","krillin","bulma","luffy","zoro",
-        "sanji","nami","usopp","chopper","robin","shanks",
-        "mihawk","tanjiro","nezuko","zenitsu","inosuke","kanao","giyu","shinobu",
-        "muichiro","mitsuri","obito","rin","boruto","sarada","mitsuki","orochimaru",
-        "hinata","kiba","shino","ino","choji","shikamaru","gaara","rock lee",
-        "tenten","tsunade","minato","hashirama","tobirama","saitama",
-        "tatsumaki","reigen","eren","mikasa","armin","levi","erwin","hange",
-        "historia","annie","reiner","bertholdt","killua","gon","kurapika","hisoka",
-        "yusuke","kurama",
-        "light","L","ichigo","rukia","orihime","ulquiorra",
-        "grimmjow","asta","yuno","yami","isagi","nagi","bachira","gojo","aiku","toji","yuji","kaiser","lorenzo"] },
+        { name: 'Anime' },
   
-        { name: 'Sports', items: ["football","basketball","tennis","volleyball","handball","baseball",
-        "rugby","golf","cricket","badminton","ping pong",
-        "hockey","skating","skiing",
-        "surfing","swimming","diving","archery","fencing","boxing","karate",
-        "wrestling","cycling","biking","skateboarding","bowling","darts",
-        "billiards","horse racing",
-        "fishing","gymnastics","dance","ballet",
-        "marathon",
-        "long jump",
-        "bodybuilding","parkour","rock climbing",
-        "hiking","paintball",
-        "formula 1","karting","sumo",
-       ,"esports"] },
+        { name: 'Sports' },
   
-        { name: 'Celebrity', items: ["cristiano ronaldo","lionel messi","neymar","kylian mbappe","karim benzema",
-        "mohamed salah","kevin de bruyne","erling haaland","robert lewandowski",
-        "luka modric","tony stark","chris hemsworth","chris evans","scarlett johansson",
-        "tom holland","zendaya","emma watson","daniel radcliffe","rupert grint",
-        "brad pitt","angelina jolie","johnny depp","will smith","jackie chan",
-        "dwayne johnson","vin diesel","gal gadot","ryan reynolds","blake lively",
-        "selena gomez","ariana grande","taylor swift","ed sheeran","shakira",
-        "rihanna","beyonce","justin bieber","harry styles","zayn malik","niall horan",
-        "liam payne","louis tomlinson","billie eilish","bruno mars","lady gaga",
-        "dua lipa","nicki minaj","katy perry","miley cyrus","shawn mendes","drake",
-        "post malone","the weeknd","snoop dogg","eminem","kanye west","jay z",
-        "lebron james","stephen curry","michael jordan","kobe bryant","shaquille o'neal",
-        "ronaldo nazario","pele","david beckham","zinedine zidane","andres iniesta",
-        "xavi","ronaldinho","thierry henry","serena williams","roger federer",
-        "rafael nadal","novak djokovic","usain bolt","michael phelps","simone biles",
-        "ellen degeneres","oprah winfrey","jim carrey","steve carell","robert downey jr",
-        "chris pratt","mark ruffalo","paul rudd","benedict cumberbatch","morgan freeman",
-        "hugh jackman","ian mckellen","patrick stewart","tom hanks","keanu reeves",
-        "adam sandler","seth rogen","ryan gosling","emma stone","jennifer lawrence"] },
+        { name: 'superhero'  },
   
-        { name: 'Random Object', items: ["pen","pencil","book","notebook","bag","chair","table","desk","lamp","light",
-        "bottle","glass","cup","plate","bowl","spoon","fork","knife","pan",
-        "oven","microwave","fridge","phone","laptop","computer",
-        "mouse","keyboard","charger","cable","earphones","headphones","tv","remote",
-        "bed","pillow","blanket","sheet","mirror","window","door","wall","clock",
-        "watch","wallet","key","keychain","umbrella","hat","cap","shoe","sock",
-        "belt","scarf","glove","jacket","coat","shirt","tshirt","pants","jeans",
-        "shorts","skirt","dress","ring","bracelet","toothbrush",
-        "toothpaste","soap","shampoo","towel","comb","brush","razor","perfume",
-        "deodorant","bag","box","basket","bin","broom","mop","vacuum","bucket",
-        "ball","racket","net","rope","chain","string","tape","glue"] }
+        { name: 'Random Object'}
         ];
 
 io.on('connection', (socket) => {
@@ -157,13 +95,11 @@ io.on('connection', (socket) => {
     const room = rooms[roomCode];
     if (!room) return;
     let theme = null;
-    let item = null;
+    // Only pick the theme, not a specific item
     if (room.currentRound < THEMES.length) {
       theme = THEMES[room.currentRound].name;
-      const items = THEMES[room.currentRound].items;
-      item = items[Math.floor(Math.random() * items.length)];
     }
-    const time = 120; // seconds
+    const time = 180; // seconds
     const startTimestamp = Date.now();
     room.roundStartTimestamp = startTimestamp;
     room.roundTime = time;
@@ -172,10 +108,8 @@ io.on('connection', (socket) => {
     // --- TIMER ENFORCEMENT ---
     if (room.roundTimeout) clearTimeout(room.roundTimeout);
     room.roundTimeout = setTimeout(() => {
-      // For any player who hasn't submitted, add a blank drawing
       for (const player of room.players) {
         if (!room.drawings[player.id]) {
-          // You can use a blank image or a placeholder
           room.drawings[player.id] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAMAAACahl6sAAAAA1BMVEUAAACnej3aAAAASElEQVR4nO3BMQEAAAgDoJvc6F9hAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwG4wAAQ2r+JwAAAAASUVORK5CYII=";
         }
       }
@@ -184,15 +118,15 @@ io.on('connection', (socket) => {
     // --- END TIMER ENFORCEMENT ---
 
     io.to(roomCode).emit('startRound', {
-      round: room.currentRound + 1,
-      totalRounds: THEMES.length + 1,
+      round,
+      totalRounds,
       theme,
       item,
       time,
-      startTimestamp
+      startTimestamp,
+      serverTime: Date.now()
     });
   }
-
   socket.on('submitDrawing', ({ roomCode, round, drawing }) => {
     const room = rooms[roomCode];
     if (!room) return;
