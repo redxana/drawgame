@@ -92,41 +92,48 @@ io.on('connection', (socket) => {
   });
 
   function startNextRound(roomCode) {
-    const room = rooms[roomCode];
-    if (!room) return;
-    let theme = null;
-    // Only pick the theme, not a specific item
-    if (room.currentRound < THEMES.length) {
-      theme = THEMES[room.currentRound].name;
-    }
-    const time = 180; // seconds
-    const startTimestamp = Date.now();
-    room.roundStartTimestamp = startTimestamp;
-    room.roundTime = time;
-    room.drawings = {}; // Reset drawings for the new round
+  const room = rooms[roomCode];
+  if (!room) return;
 
-    // --- TIMER ENFORCEMENT ---
-    if (room.roundTimeout) clearTimeout(room.roundTimeout);
-    room.roundTimeout = setTimeout(() => {
-      for (const player of room.players) {
-        if (!room.drawings[player.id]) {
-          room.drawings[player.id] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAMAAACahl6sAAAAA1BMVEUAAACnej3aAAAASElEQVR4nO3BMQEAAAgDoJvc6F9hAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwG4wAAQ2r+JwAAAAASUVORK5CYII=";
-        }
-      }
-      io.to(roomCode).emit('showDrawings', room.drawings);
-    }, time * 1000);
-    // --- END TIMER ENFORCEMENT ---
-
-    io.to(roomCode).emit('startRound', {
-      round,
-      totalRounds,
-      theme,
-      item,
-      time,
-      startTimestamp,
-      serverTime: Date.now()
-    });
+  let theme = null;
+  // Only pick the theme if within THEMES length
+  if (room.currentRound < THEMES.length) {
+    theme = THEMES[room.currentRound].name;
   }
+
+  const time = 180; // seconds
+  const startTimestamp = Date.now();
+  room.roundStartTimestamp = startTimestamp;
+  room.roundTime = time;
+  room.drawings = {}; // Reset drawings for the new round
+
+  const round = room.currentRound + 1;
+  const totalRounds = THEMES.length;
+  const item = null;
+
+  // --- TIMER ENFORCEMENT ---
+  if (room.roundTimeout) clearTimeout(room.roundTimeout);
+  room.roundTimeout = setTimeout(() => {
+    for (const player of room.players) {
+      if (!room.drawings[player.id]) {
+        room.drawings[player.id] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAMAAACahl6sAAAAA1BMVEUAAACnej3aAAAASElEQVR4nO3BMQEAAAgDoJvc6F9hAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwG4wAAQ2r+JwAAAAASUVORK5CYII=";
+      }
+    }
+    io.to(roomCode).emit('showDrawings', room.drawings);
+  }, time * 1000);
+  // --- END TIMER ENFORCEMENT ---
+
+  io.to(roomCode).emit('startRound', {
+    round,
+    totalRounds,
+    theme,
+    item,
+    time,
+    startTimestamp,
+    serverTime: Date.now()
+  });
+}
+
   socket.on('submitDrawing', ({ roomCode, round, drawing }) => {
     const room = rooms[roomCode];
     if (!room) return;
