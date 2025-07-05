@@ -89,10 +89,10 @@ io.on('connection', (socket) => {
     io.to(roomCode).emit('updatePlayers', room.players, room.leader, room.started);
   });
 
-  socket.on('startGame', (roomCode) => {
-    console.log(`Starting round ${room.currentRound + 1} for room ${roomCode}`);
+  socket.on('startGame', (roomCode) => {  
     const room = rooms[roomCode];
     if (!room || room.leader !== socket.id) return;
+    console.log(`Starting round ${room.currentRound + 1} for room ${roomCode}`);
     room.started = true;
     room.currentRound = 0;
     room.drawings = {};
