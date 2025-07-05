@@ -213,40 +213,51 @@ io.on('connection', (socket) => {
 
     // Collect votes for best drawing if there are >2 players
   socket.on('submitVote', ({ roomCode, targetId }) => {
-    const room = rooms[roomCode];
-    if (!room) return;
-    if (!room.votes) room.votes = {};
-    // Prevent voting for self
-    if (targetId === socket.id) return;
-    room.votes[socket.id] = targetId;
+  const room = rooms[roomCode];
+  if (!room) return;
+  if (!room.votes) room.votes = {};
+  // Prevent voting for self
+  if (targetId === socket.id) return;
+  room.votes[socket.id] = targetId;
 
-    // When all players have voted, tally votes
-    if (Object.keys(room.votes).length === room.players.length) {
-      const voteCounts = {};
-      Object.values(room.votes).forEach(votedId => {
-        voteCounts[votedId] = (voteCounts[votedId] || 0) + 1;
-      });
+  // When all players have voted, tally votes
+  if (Object.keys(room.votes).length === room.players.length) {
+    const voteCounts = {};
+    Object.values(room.votes).forEach(votedId => {
+      voteCounts[votedId] = (voteCounts[votedId] || 0) + 1;
+    });
 
-      // Determine winner(s)
-      let maxVotes = 0;
-      let winners = [];
-      for (const [id, count] of Object.entries(voteCounts)) {
-        if (count > maxVotes) {
-          maxVotes = count;
-          winners = [id];
-        } else if (count === maxVotes) {
-          winners.push(id);
-        }
+    // Determine winner(s)
+    let maxVotes = 0;
+    let winners = [];
+    for (const [id, count] of Object.entries(voteCounts)) {
+      if (count > maxVotes) {
+        maxVotes = count;
+        winners = [id];
+      } else if (count === maxVotes) {
+        winners.push(id);
       }
-
-      io.to(roomCode).emit('voteResults', { winners, voteCounts });
-
-      // Prepare for next round
-      room.waitingForNext = true;
-      room.nextRoundReady = [];
-      room.votes = {};
     }
-  });
+
+    io.to(roomCode).emit('voteResults', { winners, voteCounts });
+
+    // ➡️ Emit showScores to proceed to scores screen
+    const scores = {};
+    for (const id of Object.keys(voteCounts)) {
+      scores[id] = {
+        average: voteCounts[id],
+        ratings: [] // votes do not have rating details but keep structure consistent
+      };
+    }
+    io.to(roomCode).emit('showScores', { drawings: room.drawings, scores });
+
+    // Prepare for next round
+    room.waitingForNext = true;
+    room.nextRoundReady = [];
+    room.votes = {};
+  }
+});
+
 
 
   socket.on('unreadyDrawing', ({ roomCode, round }) => {
