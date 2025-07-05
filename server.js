@@ -42,8 +42,9 @@ const THEMES = [
         { name: 'meme'  },
 
         { name: 'country'  },
-  
-        { name: 'Random Object'}
+
+        { name: 'FREE DRAW', free: true }
+
         ];
 
 io.on('connection', (socket) => {
@@ -101,8 +102,9 @@ io.on('connection', (socket) => {
   const room = rooms[roomCode];
   if (!room) return;
 
+  room.nextRoundReady = []; // <-- ADD THIS LINE to reset it
+
   let theme = null;
-  // Only pick the theme if within THEMES length
   if (room.currentRound < THEMES.length) {
     theme = THEMES[room.currentRound].name;
   }
@@ -117,7 +119,6 @@ io.on('connection', (socket) => {
   const totalRounds = THEMES.length;
   const item = null;
 
-  // --- TIMER ENFORCEMENT ---
   if (room.roundTimeout) clearTimeout(room.roundTimeout);
   room.roundTimeout = setTimeout(() => {
     for (const player of room.players) {
@@ -127,7 +128,6 @@ io.on('connection', (socket) => {
     }
     io.to(roomCode).emit('showDrawings', room.drawings);
   }, time * 1000);
-  // --- END TIMER ENFORCEMENT ---
 
   io.to(roomCode).emit('startRound', {
     round,
@@ -139,6 +139,7 @@ io.on('connection', (socket) => {
     serverTime: Date.now()
   });
 }
+
 
   socket.on('submitDrawing', ({ roomCode, round, drawing }) => {
     const room = rooms[roomCode];
