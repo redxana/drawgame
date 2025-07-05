@@ -217,18 +217,16 @@ io.on('connection', (socket) => {
   const room = rooms[roomCode];
   if (!room) return;
   if (!room.votes) room.votes = {};
-  // Prevent voting for self
-  if (targetId === socket.id) return;
+  if (targetId === socket.id) return; // Prevent self vote
+
   room.votes[socket.id] = targetId;
 
-  // When all players have voted, tally votes
   if (Object.keys(room.votes).length === room.players.length) {
     const voteCounts = {};
     Object.values(room.votes).forEach(votedId => {
       voteCounts[votedId] = (voteCounts[votedId] || 0) + 1;
     });
 
-    // Determine winner(s)
     let maxVotes = 0;
     let winners = [];
     for (const [id, count] of Object.entries(voteCounts)) {
@@ -240,24 +238,30 @@ io.on('connection', (socket) => {
       }
     }
 
-    io.to(roomCode).emit('voteResults', { winners, voteCounts });
+    if (room.players.length > 2) {
+      // Only for >2 players show winners’ drawings without scores
+      const winnerDrawings = {};
+      winners.forEach(winnerId => {
+        winnerDrawings[winnerId] = room.drawings[winnerId];
+      });
 
-    // ➡️ Emit showScores to proceed to scores screen
-    const scores = {};
-    for (const id of Object.keys(voteCounts)) {
-      scores[id] = {
-        average: voteCounts[id],
-        ratings: [] // votes do not have rating details but keep structure consistent
-      };
+      io.to(roomCode).emit('showRoundWinners', {
+        title: "Drawing(s) of the round:",
+        drawings: winnerDrawings,
+        winners,
+        voteCounts
+      });
+    } else {
+      // For <=2 players fallback to old behaviour (show all drawings with scores if needed)
+      io.to(roomCode).emit('voteResults', { winners, voteCounts });
     }
-    io.to(roomCode).emit('showScores', { drawings: room.drawings, scores });
 
-    // Prepare for next round
     room.waitingForNext = true;
     room.nextRoundReady = [];
     room.votes = {};
   }
 });
+
 
 
 
