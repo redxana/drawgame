@@ -102,7 +102,12 @@ io.on('connection', (socket) => {
   const room = rooms[roomCode];
   if (!room) return;
 
-  room.nextRoundReady = []; // <-- ADD THIS LINE to reset it
+  room.nextRoundReady = []; 
+  io.to(roomCode).emit('nextRoundReadyUpdate', {
+  ready: 0,
+  total: room.players.length
+});
+
 
   let theme = null;
   if (room.currentRound < THEMES.length) {
