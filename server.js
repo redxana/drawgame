@@ -1,4 +1,4 @@
-const express = require('express'); // <-- You need this!
+const express = require('express'); 
 const http = require('http');
 const cors = require('cors');
 const app = express();
@@ -11,7 +11,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Serve static files if needed (optional, for health check)
+
 app.get('/', (req, res) => {
   res.send('Server is running!');
 });
@@ -23,7 +23,7 @@ const io = new Server(server, {
   cors: {
     origin: '*',
     methods: ['GET', 'POST'],
-    credentials: false // <--- set to false for testing
+    credentials: false 
   }
 });
 
@@ -211,6 +211,44 @@ io.on('connection', (socket) => {
     }
   });
 
+    // Collect votes for best drawing if there are >2 players
+  socket.on('submitVote', ({ roomCode, targetId }) => {
+    const room = rooms[roomCode];
+    if (!room) return;
+    if (!room.votes) room.votes = {};
+    // Prevent voting for self
+    if (targetId === socket.id) return;
+    room.votes[socket.id] = targetId;
+
+    // When all players have voted, tally votes
+    if (Object.keys(room.votes).length === room.players.length) {
+      const voteCounts = {};
+      Object.values(room.votes).forEach(votedId => {
+        voteCounts[votedId] = (voteCounts[votedId] || 0) + 1;
+      });
+
+      // Determine winner(s)
+      let maxVotes = 0;
+      let winners = [];
+      for (const [id, count] of Object.entries(voteCounts)) {
+        if (count > maxVotes) {
+          maxVotes = count;
+          winners = [id];
+        } else if (count === maxVotes) {
+          winners.push(id);
+        }
+      }
+
+      io.to(roomCode).emit('voteResults', { winners, voteCounts });
+
+      // Prepare for next round
+      room.waitingForNext = true;
+      room.nextRoundReady = [];
+      room.votes = {};
+    }
+  });
+
+
   socket.on('unreadyDrawing', ({ roomCode, round }) => {
     const room = rooms[roomCode];
     if (!room || !room.drawings) return;
@@ -284,6 +322,8 @@ socket.on('drawingReady', ({ roomCode, ready }) => {
   }
 });
 
+
+
   socket.on('disconnect', () => {
     for (const roomCode in rooms) {
       const room = rooms[roomCode];
@@ -300,6 +340,7 @@ socket.on('drawingReady', ({ roomCode, ready }) => {
     }
   });
 });
+
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
