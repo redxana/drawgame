@@ -90,6 +90,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('startGame', (roomCode) => {
+    console.log(`Starting round ${room.currentRound + 1} for room ${roomCode}`);
     const room = rooms[roomCode];
     if (!room || room.leader !== socket.id) return;
     room.started = true;
@@ -99,6 +100,8 @@ io.on('connection', (socket) => {
   });
 
   function startNextRound(roomCode) {
+    
+
   const room = rooms[roomCode];
   if (!room) return;
 
@@ -148,6 +151,8 @@ io.on('connection', (socket) => {
 
 
   socket.on('submitDrawing', ({ roomCode, round, drawing }) => {
+    console.log(`Received drawing from ${socket.id} for round ${round}`);
+
     const room = rooms[roomCode];
     if (!room) return;
     if (!room.drawings) room.drawings = {};
@@ -168,6 +173,8 @@ io.on('connection', (socket) => {
 
   // Collect ratings
   socket.on('submitRating', ({ roomCode, targetId, rating }) => {
+    console.log(`Received drawing from ${socket.id} for round ${round}`);
+
     const room = rooms[roomCode];
     if (!room) return;
     if (!room.ratings) room.ratings = {};
