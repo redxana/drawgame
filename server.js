@@ -36,6 +36,12 @@ const THEMES = [
         { name: 'Sports' },
   
         { name: 'superhero'  },
+
+        { name: 'food'  },
+
+        { name: 'meme'  },
+
+        { name: 'country'  },
   
         { name: 'Random Object'}
         ];
