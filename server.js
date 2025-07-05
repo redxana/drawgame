@@ -102,12 +102,12 @@ io.on('connection', (socket) => {
   const room = rooms[roomCode];
   if (!room) return;
 
-  room.nextRoundReady = []; 
-  io.to(roomCode).emit('nextRoundReadyUpdate', {
-  ready: 0,
-  total: room.players.length
-});
+  room.nextRoundReady = []; // Clear readiness
 
+  io.to(roomCode).emit('nextRoundReadyUpdate', {
+    ready: 0,
+    total: room.players.length
+  });
 
   let theme = null;
   if (room.currentRound < THEMES.length) {
@@ -118,7 +118,7 @@ io.on('connection', (socket) => {
   const startTimestamp = Date.now();
   room.roundStartTimestamp = startTimestamp;
   room.roundTime = time;
-  room.drawings = {}; // Reset drawings for the new round
+  room.drawings = {}; // Reset drawings
 
   const round = room.currentRound + 1;
   const totalRounds = THEMES.length;
@@ -144,6 +144,7 @@ io.on('connection', (socket) => {
     serverTime: Date.now()
   });
 }
+
 
 
   socket.on('submitDrawing', ({ roomCode, round, drawing }) => {
