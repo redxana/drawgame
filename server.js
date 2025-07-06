@@ -100,11 +100,12 @@ io.on('connection', (socket) => {
   });
 
   function startNextRound(roomCode) {
+
     
 
   const room = rooms[roomCode];
   if (!room) return;
-
+  room.waitingForNext = false;
   room.nextRoundReady = []; // Clear readiness
 
   io.to(roomCode).emit('nextRoundReadyUpdate', {
@@ -129,13 +130,18 @@ io.on('connection', (socket) => {
 
   if (room.roundTimeout) clearTimeout(room.roundTimeout);
   room.roundTimeout = setTimeout(() => {
-    for (const player of room.players) {
-      if (!room.drawings[player.id]) {
-        room.drawings[player.id] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAMAAACahl6sAAAAA1BMVEUAAACnej3aAAAASElEQVR4nO3BMQEAAAgDoJvc6F9hAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwG4wAAQ2r+JwAAAAASUVORK5CYII=";
-      }
+  for (const player of room.players) {
+    if (!room.drawings[player.id]) {
+      room.drawings[player.id] = "data:image/png;base64,...";
     }
-    io.to(roomCode).emit('showDrawings', room.drawings);
-  }, time * 1000);
+  }
+  io.to(roomCode).emit('showDrawings', room.drawings);
+
+  room.waitingForNext = true;
+  room.nextRoundReady = [];
+  io.to(roomCode).emit('waitingForNextRound'); // optional event for client UI
+}, time * 1000);
+
 
   io.to(roomCode).emit('startRound', {
     round,
@@ -161,6 +167,8 @@ io.on('connection', (socket) => {
     if (Object.keys(room.drawings).length === room.players.length) {
       if (room.roundTimeout) clearTimeout(room.roundTimeout);
       io.to(roomCode).emit('showDrawings', room.drawings);
+      room.waitingForNext = true;
+      room.nextRoundReady = [];
     }
   });
 
