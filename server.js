@@ -146,6 +146,7 @@ room.roundTimeout = setTimeout(() => {
 
 
 
+
   io.to(roomCode).emit('startRound', {
     round,
     totalRounds,
@@ -172,6 +173,7 @@ room.roundTimeout = setTimeout(() => {
       io.to(roomCode).emit('showDrawings', room.drawings);
       room.waitingForNext = true;
       room.nextRoundReady = [];
+      io.to(roomCode).emit('waitingForNextRound');
     }
   });
 
