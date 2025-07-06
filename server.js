@@ -293,30 +293,37 @@ io.on('connection', (socket) => {
 
   // Handle next round readiness
   socket.on('nextRoundReady', ({ roomCode, ready }) => {
-    const room = rooms[roomCode];
-    if (!room || !room.waitingForNext) return;
-    if (!room.nextRoundReady) room.nextRoundReady = [];
-    if (ready) {
-      if (!room.nextRoundReady.includes(socket.id)) room.nextRoundReady.push(socket.id);
-    } else {
-      room.nextRoundReady = room.nextRoundReady.filter(id => id !== socket.id);
+  console.log('nextRoundReady event:', { roomCode, ready, socketId: socket.id });
+
+  const room = rooms[roomCode];
+  if (!room) {
+    console.log('Room not found');
+    return;
+  }
+  if (!room.waitingForNext) {
+    console.log('Not waiting for next round');
+    return;
+  }
+  if (!room.nextRoundReady) room.nextRoundReady = [];
+
+  if (ready) {
+    if (!room.nextRoundReady.includes(socket.id)) {
+      room.nextRoundReady.push(socket.id);
+      console.log('Player ready added:', socket.id);
     }
-    io.to(roomCode).emit('nextRoundReadyUpdate', {
-      ready: room.nextRoundReady.length,
-      total: room.players.length
-    });
-    if (room.nextRoundReady.length === room.players.length) {
-      room.waitingForNext = false;
-      room.currentRound++;
-      if (room.currentRound < THEMES.length + 1) {
-        room.drawings = {};
-        room.ratings = {};
-        startNextRound(roomCode);
-      } else {
-        io.to(roomCode).emit('gameOver');
-      }
-    }
+  } else {
+    room.nextRoundReady = room.nextRoundReady.filter(id => id !== socket.id);
+    console.log('Player ready removed:', socket.id);
+  }
+
+  console.log('Ready players:', room.nextRoundReady);
+
+  io.to(roomCode).emit('nextRoundReadyUpdate', {
+    ready: room.nextRoundReady.length,
+    total: room.players.length
   });
+});
+
 
   socket.on('leaderNextRound', ({ roomCode }) => {
     const room = rooms[roomCode];
