@@ -129,18 +129,23 @@ io.on('connection', (socket) => {
   const item = null;
 
   if (room.roundTimeout) clearTimeout(room.roundTimeout);
-  room.roundTimeout = setTimeout(() => {
-  for (const player of room.players) {
-    if (!room.drawings[player.id]) {
-      room.drawings[player.id] = "data:image/png;base64,...";
-    }
-  }
-  io.to(roomCode).emit('showDrawings', room.drawings);
+    room.roundTimeout = setTimeout(() => {
+      console.log(`Timer ended for room ${roomCode}`);
 
-  room.waitingForNext = true;
-  room.nextRoundReady = [];
-  io.to(roomCode).emit('waitingForNextRound'); // optional event for client UI
-}, time * 1000);
+      for (const player of room.players) {
+        if (!room.drawings[player.id]) {
+          room.drawings[player.id] = "data:image/png;base64,...";
+        }
+      }
+      console.log(`Emitting showDrawings for room ${roomCode}`);
+      io.to(roomCode).emit('showDrawings', room.drawings);
+
+      room.waitingForNext = true;
+      room.nextRoundReady = [];
+      console.log(`Emitting waitingForNextRound for room ${roomCode}`);
+      io.to(roomCode).emit('waitingForNextRound');
+    }, time * 1000);
+
 
 
   io.to(roomCode).emit('startRound', {
