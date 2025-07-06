@@ -324,26 +324,8 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Drawing ready/Unready
-socket.on('drawingReady', ({ roomCode, ready }) => {
-  const room = rooms[roomCode];
-  if (!room) return;
-  if (!room.drawingReady) room.drawingReady = [];
-  if (ready) {
-    if (!room.drawingReady.includes(socket.id)) room.drawingReady.push(socket.id);
-  } else {
-    room.drawingReady = room.drawingReady.filter(id => id !== socket.id);
-  }
-  io.to(roomCode).emit('drawingReadyUpdate', {
-    ready: room.drawingReady.length,
-    total: room.players.length
-  });
-  // If all players are ready, move to showDrawings
-  if (room.drawingReady.length === room.players.length) {
-    room.drawingReady = [];
-    io.to(roomCode).emit('showDrawings', room.drawings);
-  }
-});
+  
+
 
 
 
